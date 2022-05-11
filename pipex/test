@@ -1,0 +1,5 @@
+fd[0] == readend;
+      ||          === f1;
+fd[1] == writend;
+    ||
+    f2 == stdout;
