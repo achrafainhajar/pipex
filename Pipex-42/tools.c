@@ -95,3 +95,28 @@ char	**ft_split(char const *s, char c)
 		return (0);
 	return (ft_charcount(s, c, str, cnt));
 }
+
+int	openfile(char *filename, int mode)
+{
+	if (mode == 0)
+	{
+		if (access(filename, F_OK))
+		{
+			write(STDERR, "pipex: ", 7);
+			write(STDERR, filename, ft_strlen(filename));
+			write(STDERR, ": No such file or directory\n", 28);
+			return (STDIN);
+		}
+		return (open(filename, O_RDONLY));
+	}
+	else
+		return (open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0644));
+}
+
+void	wrong_cmd(char *cmd)
+{
+	write(STDERR, "pipex: ", 7);
+	write(STDERR, cmd, ft_strlen(cmd));
+	write(STDERR, ": command not found\n", 20);
+	exit(127);
+}

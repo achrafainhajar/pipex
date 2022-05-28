@@ -48,7 +48,7 @@ int	execute(char	**path, char		**cmdargs, char	**envp)
 		free (cmd);
 		i++;
 	}
-	perror("cmd not found");
+	wrong_cmd(cmdargs[0]);
 	return (0);
 }
 
@@ -73,29 +73,27 @@ void	pipex(char **av, char **envp, int c)
 	execute(path, cmdargs, envp);
 }
 
-void	redir(char **env, char **av, int i)
+void	redir(char **env, char **av, int i, int f)
 {
 	int	fd[2];
 	int	pid;
 
 	if (pipe(fd) < 0)
-		perror("Error in pipe function");
+		exit(2);
 	pid = fork();
-	if (pid > 0)
+	if (pid)
 	{
 		close(fd[1]);
 		dup2(fd[0], STDIN);
 		waitpid(pid, NULL, 0);
 	}
-	else if (pid == 0)
+	else
 	{
 		close(fd[0]);
 		dup2(fd[1], STDOUT);
+		if (f == STDIN)
+			exit(2);
 		pipex(av, env, i);
-	}
-	else
-	{
-		perror("No process created");
 	}
 }
 
@@ -106,24 +104,24 @@ int	main(int ac, char **av, char **envp)
 	int	i;
 
 	i = 2;
-	f2 = open(av[ac - 1], O_CREAT | O_RDWR | O_TRUNC, 0644);
-	dup2(f2, STDOUT);
-	if (ft_strncmp(av[1], "here_doc", 7) == 0)
+	if (ac >= 5)
 	{
-		heredoc(envp, av, 3);
-		pipex(av, envp, 4);
-	}
-	else if (ac >= 5)
-	{
-		f1 = open(av[1], O_RDONLY);
-		dup2(f1, STDIN);
-		while (i < ac - 2)
+		f2 = openfile(av[ac - 1], 1);
+		dup2(f2, STDOUT);
+		if (ac == 6 && ft_strncmp(av[1], "here_doc", 7) == 0)
 		{
-			redir(envp, av, i);
-			i++;
+			heredoc(envp, av, 3);
+			pipex(av, envp, 4);
 		}
-		pipex(av, envp, i);
+		else if (ac >= 5)
+		{
+			f1 = openfile(av[1], 0);
+			dup2(f1, STDIN);
+			while (i < ac - 2)
+				redir(envp, av, i++, f1);
+			pipex(av, envp, i);
+		}
 	}
 	else
-		perror("invalid numbers of arguments");
+		write(STDERR, "Invalid number of arguments.\n", 29);
 }
